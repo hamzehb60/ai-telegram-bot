@@ -10,7 +10,7 @@ BOT_TOKEN = os.getenv("BOT_TOKEN")
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 
 # Channel
-CHANNEL_USERNAME = "@Ghoghnoostradebot"
+CHANNEL_USERNAME = "@ghoghnooscement"
 
 # Admin
 ADMIN_PHONE = "09130127941"
