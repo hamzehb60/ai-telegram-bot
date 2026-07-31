@@ -8,41 +8,34 @@ async def init_db():
     async with aiosqlite.connect(DB_NAME) as db:
 
         await db.execute("""
-
         CREATE TABLE IF NOT EXISTS orders(
 
             id INTEGER PRIMARY KEY AUTOINCREMENT,
 
-            full_name TEXT,
+            full_name TEXT NOT NULL,
 
-            phone TEXT,
+            phone TEXT NOT NULL,
 
-            city TEXT,
+            city TEXT NOT NULL,
 
-            amount INTEGER,
+            amount TEXT NOT NULL,
 
             description TEXT,
 
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 
         )
-
         """)
 
         await db.commit()
 
 
-
 async def add_order(
 
     full_name,
-
     phone,
-
     city,
-
     amount,
-
     description
 
 ):
@@ -52,7 +45,6 @@ async def add_order(
         await db.execute(
 
             """
-
             INSERT INTO orders(
 
                 full_name,
@@ -67,11 +59,7 @@ async def add_order(
 
             )
 
-            VALUES(
-
-                ?,?,?,?,?
-
-            )
+            VALUES(?,?,?,?,?)
 
             """,
 
@@ -94,7 +82,6 @@ async def add_order(
         await db.commit()
 
 
-
 async def get_orders():
 
     async with aiosqlite.connect(DB_NAME) as db:
@@ -102,19 +89,23 @@ async def get_orders():
         cursor = await db.execute(
 
             """
-
-            SELECT *
+            SELECT
+                id,
+                full_name,
+                phone,
+                city,
+                amount,
+                description,
+                created_at
 
             FROM orders
 
             ORDER BY id DESC
-
             """
 
         )
 
         return await cursor.fetchall()
-
 
 
 async def count_orders():
@@ -123,13 +114,7 @@ async def count_orders():
 
         cursor = await db.execute(
 
-            """
-
-            SELECT COUNT(*)
-
-            FROM orders
-
-            """
+            "SELECT COUNT(*) FROM orders"
 
         )
 
@@ -138,26 +123,15 @@ async def count_orders():
         return result[0]
 
 
-
 async def delete_order(order_id):
 
     async with aiosqlite.connect(DB_NAME) as db:
 
         await db.execute(
 
-            """
+            "DELETE FROM orders WHERE id=?",
 
-            DELETE FROM orders
-
-            WHERE id=?
-
-            """,
-
-            (
-
-                order_id,
-
-            )
+            (order_id,)
 
         )
 
