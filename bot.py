@@ -1,9 +1,6 @@
 import logging
 
-from telegram import (
-    Update,
-    ReplyKeyboardRemove
-)
+from telegram import Update
 
 from telegram.ext import (
     Application,
@@ -26,8 +23,6 @@ from keyboards import (
     join_channel_keyboard
 )
 
-from ai import ask_ai
-
 from database import (
     init_db
 )
@@ -36,10 +31,12 @@ from order import (
     order_handler
 )
 
+from ai import ask_ai
+
 
 logging.basicConfig(
 
-    format="%(asctime)s - %(levelname)s - %(message)s",
+    format="%(asctime)s | %(levelname)s | %(message)s",
 
     level=logging.INFO
 
@@ -55,7 +52,6 @@ async def start(
 ):
 
     text = f"""
-
 سلام 👋
 
 به ربات رسمی
@@ -64,7 +60,7 @@ async def start(
 
 خوش آمدید.
 
-🏗 فروش سیمان عمده و خرده
+🏗 فروش عمده و خرده سیمان
 
 📍 اصفهان
 
@@ -72,7 +68,6 @@ async def start(
 ۵ تن
 
 از منوی زیر استفاده کنید.
-
 """
 
     await update.message.reply_text(
@@ -95,15 +90,13 @@ async def price(
     await update.message.reply_text(
 
         """
-
-💰 قیمت سیمان
+💰 قیمت روز سیمان
 
 برای دریافت قیمت لحظه‌ای
 
-با شماره زیر تماس بگیرید.
-
 ☎️ 09130127941
 
+تماس بگیرید.
 """
 
     )
@@ -120,10 +113,9 @@ async def delivery(
     await update.message.reply_text(
 
         """
-
 🚚 هزینه حمل
 
-براساس
+بر اساس
 
 ✅ شهر مقصد
 
@@ -132,7 +124,6 @@ async def delivery(
 ✅ نوع خودرو
 
 محاسبه می‌شود.
-
 """
 
     )
@@ -149,13 +140,11 @@ async def contact(
     await update.message.reply_text(
 
         f"""
-
 ☎️ {ADMIN_NAME}
 
-📱 {ADMIN_PHONE}
+📞 {ADMIN_PHONE}
 
 📢 {CHANNEL_USERNAME}
-
 """
 
     )
@@ -171,50 +160,49 @@ async def channel(
 
     await update.message.reply_text(
 
-        "برای عضویت در کانال روی دکمه زیر بزنید.",
+        "برای عضویت روی دکمه زیر بزنید.",
 
         reply_markup=join_channel_keyboard()
 
     )
-  async def ai_chat(
-
+    async def ai_chat(
     update: Update,
-
     context: ContextTypes.DEFAULT_TYPE
-
 ):
 
-    question = update.message.text
+    text = update.message.text
 
-    ignore = [
-
+    menu_buttons = [
         "💰 قیمت روز سیمان",
-
         "📦 ثبت سفارش",
-
         "🚚 هزینه حمل",
-
         "📢 کانال تلگرام",
-
         "☎️ تماس با ما"
-
     ]
 
-    if question in ignore:
-
+    if text in menu_buttons:
         return
 
-    answer = await ask_ai(question)
+    try:
 
-    await update.message.reply_text(answer)
+        answer = await ask_ai(text)
+
+        await update.message.reply_text(answer)
+
+    except Exception as e:
+
+        logging.error(e)
+
+        await update.message.reply_text(
+
+            "در حال حاضر ارتباط با هوش مصنوعی برقرار نیست."
+
+        )
 
 
-async def button_click(
-
+async def callback(
     update: Update,
-
     context: ContextTypes.DEFAULT_TYPE
-
 ):
 
     query = update.callback_query
@@ -225,12 +213,12 @@ async def button_click(
 
         await query.edit_message_text(
 
-            "✅ عضویت شما بررسی شد."
+            "✅ عضویت شما تایید شد."
 
         )
 
 
-def main():
+def create_app():
 
     app = Application.builder().token(
 
@@ -254,7 +242,7 @@ def main():
 
         CallbackQueryHandler(
 
-            button_click
+            callback
 
         )
 
@@ -270,11 +258,7 @@ def main():
 
         MessageHandler(
 
-            filters.Regex(
-
-                "^💰 قیمت روز سیمان$"
-
-            ),
+            filters.Regex("^💰 قیمت روز سیمان$"),
 
             price
 
@@ -286,11 +270,7 @@ def main():
 
         MessageHandler(
 
-            filters.Regex(
-
-                "^🚚 هزینه حمل$"
-
-            ),
+            filters.Regex("^🚚 هزینه حمل$"),
 
             delivery
 
@@ -302,11 +282,7 @@ def main():
 
         MessageHandler(
 
-            filters.Regex(
-
-                "^☎️ تماس با ما$"
-
-            ),
+            filters.Regex("^☎️ تماس با ما$"),
 
             contact
 
@@ -318,11 +294,7 @@ def main():
 
         MessageHandler(
 
-            filters.Regex(
-
-                "^📢 کانال تلگرام$"
-
-            ),
+            filters.Regex("^📢 کانال تلگرام$"),
 
             channel
 
@@ -344,10 +316,8 @@ def main():
 
     )
 
-    app.run_polling()
-
-
-if __name__ == "__main__":
+    return app
+    def main():
 
     import asyncio
 
@@ -357,5 +327,35 @@ if __name__ == "__main__":
 
     )
 
-    main()
-  
+    app = create_app()
+
+    logging.info(
+
+        "Ghoghnoos Cement Bot Started..."
+
+    )
+
+    app.run_polling(
+
+        allowed_updates=Update.ALL_TYPES
+
+    )
+
+
+if __name__ == "__main__":
+
+    try:
+
+        main()
+
+    except KeyboardInterrupt:
+
+        logging.info(
+
+            "Bot Stopped."
+
+        )
+
+    except Exception as e:
+
+        logging.exception(e)
