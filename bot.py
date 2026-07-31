@@ -1,7 +1,7 @@
 import logging
 
 from telegram import Update
-
+from admin import register_admin_handlers
 from telegram.ext import (
     Application,
     CommandHandler,
@@ -221,6 +221,7 @@ def create_application():
     application.add_handler(
         order_handler()
     )
+    register_admin_handlers(application)
         application.add_handler(
         MessageHandler(
             filters.Regex("^💰 قیمت روز سیمان$"),
