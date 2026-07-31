@@ -4,109 +4,94 @@ from telegram.ext import (
     ConversationHandler,
     MessageHandler,
     CommandHandler,
-    filters
+    filters,
 )
 
 from database import add_order
 from keyboards import main_menu
 
-NAME = 1
-PHONE = 2
-CITY = 3
-AMOUNT = 4
-DESCRIPTION = 5
+NAME, PHONE, CITY, AMOUNT, DESCRIPTION = range(5)
 
 
 async def start_order(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
-    await update.message.reply_text(
+    context.user_data.clear()
 
+    await update.message.reply_text(
         "📦 ثبت سفارش سیمان\n\n"
         "لطفاً نام و نام خانوادگی خود را وارد کنید."
-
     )
 
     return NAME
 
 
-async def get_name(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def name(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
-    context.user_data["name"] = update.message.text
+    context.user_data["name"] = update.message.text.strip()
 
     await update.message.reply_text(
-
         "📱 شماره تماس خود را وارد کنید."
-
     )
 
     return PHONE
 
 
-async def get_phone(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def phone(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
-    context.user_data["phone"] = update.message.text
+    context.user_data["phone"] = update.message.text.strip()
 
     await update.message.reply_text(
-
         "📍 شهر مقصد را وارد کنید."
-
     )
 
     return CITY
 
 
-async def get_city(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def city(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
-    context.user_data["city"] = update.message.text
+    context.user_data["city"] = update.message.text.strip()
 
     await update.message.reply_text(
-
-        "🚚 مقدار سیمان مورد نیاز (بر حسب تن) را وارد کنید."
-
+        "🚚 مقدار سیمان (تن) را وارد کنید."
     )
 
     return AMOUNT
 
 
-async def get_amount(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def amount(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
-    context.user_data["amount"] = update.message.text
+    context.user_data["amount"] = update.message.text.strip()
 
     await update.message.reply_text(
-
         "📝 اگر توضیحی دارید بنویسید.\n"
-        "در غیر این صورت بنویسید:\n"
-        "ندارد"
-
+        "اگر ندارید بنویسید: ندارد"
     )
-  async def get_description(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
-    context.user_data["description"] = update.message.text
+    return DESCRIPTION
+    async def description(update: Update, context: ContextTypes.DEFAULT_TYPE):
+
+    context.user_data["description"] = update.message.text.strip()
 
     await add_order(
 
         context.user_data["name"],
-
         context.user_data["phone"],
-
         context.user_data["city"],
-
         context.user_data["amount"],
-
         context.user_data["description"]
 
     )
 
-    message = f"""
+    text = f"""
 ✅ سفارش شما با موفقیت ثبت شد.
 
 👤 نام:
 {context.user_data["name"]}
 
-📱 تلفن:
+📱 شماره تماس:
 {context.user_data["phone"]}
 
-📍 شهر:
+📍 شهر مقصد:
 {context.user_data["city"]}
 
 🚚 مقدار:
@@ -115,14 +100,16 @@ async def get_amount(update: Update, context: ContextTypes.DEFAULT_TYPE):
 📝 توضیحات:
 {context.user_data["description"]}
 
-کارشناس فروش در اولین فرصت با شما تماس خواهد گرفت.
+☎️ کارشناس فروش تامین سیمان ققنوس
+در اولین فرصت با شما تماس خواهد گرفت.
 
-☎️ 09130127941
+شماره تماس:
+09130127941
 """
 
     await update.message.reply_text(
 
-        message,
+        text,
 
         reply_markup=main_menu()
 
@@ -139,7 +126,7 @@ async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     await update.message.reply_text(
 
-        "❌ ثبت سفارش لغو شد.",
+        "ثبت سفارش لغو شد.",
 
         reply_markup=main_menu()
 
@@ -172,7 +159,7 @@ def order_handler():
 
                     filters.TEXT & ~filters.COMMAND,
 
-                    get_name
+                    name
 
                 )
 
@@ -184,7 +171,7 @@ def order_handler():
 
                     filters.TEXT & ~filters.COMMAND,
 
-                    get_phone
+                    phone
 
                 )
 
@@ -196,7 +183,7 @@ def order_handler():
 
                     filters.TEXT & ~filters.COMMAND,
 
-                    get_city
+                    city
 
                 )
 
@@ -208,7 +195,7 @@ def order_handler():
 
                     filters.TEXT & ~filters.COMMAND,
 
-                    get_amount
+                    amount
 
                 )
 
@@ -220,7 +207,7 @@ def order_handler():
 
                     filters.TEXT & ~filters.COMMAND,
 
-                    get_description
+                    description
 
                 )
 
@@ -241,5 +228,3 @@ def order_handler():
         ]
 
     )
-
-    return DESCRIPTION
