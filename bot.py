@@ -8,61 +8,50 @@ from telegram.ext import (
     MessageHandler,
     CallbackQueryHandler,
     ContextTypes,
-    filters
+    filters,
 )
 
 from config import (
     BOT_TOKEN,
     ADMIN_NAME,
     ADMIN_PHONE,
-    CHANNEL_USERNAME
+    CHANNEL_USERNAME,
 )
 
 from keyboards import (
     main_menu,
-    join_channel_keyboard
-)
-
-from database import (
-    init_db
-)
-
-from order import (
-    order_handler
+    join_channel_keyboard,
 )
 
 from ai import ask_ai
 
+from database import init_db
+
+from order import order_handler
+
 
 logging.basicConfig(
-
     format="%(asctime)s | %(levelname)s | %(message)s",
-
-    level=logging.INFO
-
+    level=logging.INFO,
 )
 
+logger = logging.getLogger(__name__)
 
-async def start(
 
-    update: Update,
-
-    context: ContextTypes.DEFAULT_TYPE
-
-):
+async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     text = f"""
-سلام 👋
+👋 سلام
 
 به ربات رسمی
 
-{ADMIN_NAME}
+🏢 {ADMIN_NAME}
 
 خوش آمدید.
 
-🏗 فروش عمده و خرده سیمان
-
 📍 اصفهان
+
+🏗 فروش عمده و خرده سیمان
 
 حداقل سفارش:
 ۵ تن
@@ -71,51 +60,33 @@ async def start(
 """
 
     await update.message.reply_text(
-
         text,
-
-        reply_markup=main_menu()
-
+        reply_markup=main_menu(),
     )
 
 
-async def price(
-
-    update: Update,
-
-    context: ContextTypes.DEFAULT_TYPE
-
-):
+async def price(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     await update.message.reply_text(
-
-        """
+        f"""
 💰 قیمت روز سیمان
 
 برای دریافت قیمت لحظه‌ای
 
-☎️ 09130127941
+☎️ {ADMIN_PHONE}
 
 تماس بگیرید.
 """
-
     )
 
 
-async def delivery(
-
-    update: Update,
-
-    context: ContextTypes.DEFAULT_TYPE
-
-):
+async def delivery(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     await update.message.reply_text(
-
         """
 🚚 هزینه حمل
 
-بر اساس
+هزینه حمل به
 
 ✅ شهر مقصد
 
@@ -123,64 +94,49 @@ async def delivery(
 
 ✅ نوع خودرو
 
-محاسبه می‌شود.
+بستگی دارد.
 """
-
     )
 
 
-async def contact(
-
-    update: Update,
-
-    context: ContextTypes.DEFAULT_TYPE
-
-):
+async def contact(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     await update.message.reply_text(
-
         f"""
-☎️ {ADMIN_NAME}
+☎️ تماس با ما
 
-📞 {ADMIN_PHONE}
+👤 {ADMIN_NAME}
+
+📱 {ADMIN_PHONE}
 
 📢 {CHANNEL_USERNAME}
 """
-
     )
 
 
-async def channel(
-
-    update: Update,
-
-    context: ContextTypes.DEFAULT_TYPE
-
-):
+async def channel(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     await update.message.reply_text(
-
-        "برای عضویت روی دکمه زیر بزنید.",
-
-        reply_markup=join_channel_keyboard()
-
+        "برای عضویت روی دکمه زیر کلیک کنید.",
+        reply_markup=join_channel_keyboard(),
     )
     async def ai_chat(
     update: Update,
-    context: ContextTypes.DEFAULT_TYPE
+    context: ContextTypes.DEFAULT_TYPE,
 ):
 
-    text = update.message.text
+    text = update.message.text.strip()
 
-    menu_buttons = [
+    ignore_buttons = [
         "💰 قیمت روز سیمان",
         "📦 ثبت سفارش",
         "🚚 هزینه حمل",
         "📢 کانال تلگرام",
-        "☎️ تماس با ما"
+        "☎️ تماس با ما",
+        "🤖 مشاوره خرید",
     ]
 
-    if text in menu_buttons:
+    if text in ignore_buttons:
         return
 
     try:
@@ -191,18 +147,16 @@ async def channel(
 
     except Exception as e:
 
-        logging.error(e)
+        logger.error(e)
 
         await update.message.reply_text(
-
-            "در حال حاضر ارتباط با هوش مصنوعی برقرار نیست."
-
+            "❌ ارتباط با هوش مصنوعی برقرار نشد."
         )
 
 
-async def callback(
+async def callback_handler(
     update: Update,
-    context: ContextTypes.DEFAULT_TYPE
+    context: ContextTypes.DEFAULT_TYPE,
 ):
 
     query = update.callback_query
@@ -211,134 +165,122 @@ async def callback(
 
     if query.data == "check_join":
 
-        await query.edit_message_text(
+        try:
 
-            "✅ عضویت شما تایید شد."
+            member = await context.bot.get_chat_member(
+                CHANNEL_USERNAME,
+                query.from_user.id,
+            )
 
-        )
+            if member.status in [
+                "member",
+                "administrator",
+                "creator",
+            ]:
+
+                await query.edit_message_text(
+                    "✅ عضویت شما تایید شد."
+                )
+
+            else:
+
+                await query.answer(
+                    "ابتدا عضو کانال شوید.",
+                    show_alert=True,
+                )
+
+        except Exception:
+
+            await query.answer(
+                "امکان بررسی عضویت وجود ندارد.",
+                show_alert=True,
+            )
 
 
-def create_app():
+def create_application():
 
-    app = Application.builder().token(
+    application = (
+        Application.builder()
+        .token(BOT_TOKEN)
+        .build()
+    )
 
-        BOT_TOKEN
-
-    ).build()
-
-    app.add_handler(
-
+    application.add_handler(
         CommandHandler(
-
             "start",
-
-            start
-
+            start,
         )
-
     )
 
-    app.add_handler(
-
+    application.add_handler(
         CallbackQueryHandler(
-
-            callback
-
+            callback_handler
         )
-
     )
 
-    app.add_handler(
-
+    application.add_handler(
         order_handler()
-
     )
-
-    app.add_handler(
-
+        application.add_handler(
         MessageHandler(
-
             filters.Regex("^💰 قیمت روز سیمان$"),
-
-            price
-
+            price,
         )
-
     )
 
-    app.add_handler(
-
+    application.add_handler(
         MessageHandler(
-
             filters.Regex("^🚚 هزینه حمل$"),
-
-            delivery
-
+            delivery,
         )
-
     )
 
-    app.add_handler(
-
+    application.add_handler(
         MessageHandler(
-
             filters.Regex("^☎️ تماس با ما$"),
-
-            contact
-
+            contact,
         )
-
     )
 
-    app.add_handler(
-
+    application.add_handler(
         MessageHandler(
-
             filters.Regex("^📢 کانال تلگرام$"),
-
-            channel
-
+            channel,
         )
-
     )
 
-    app.add_handler(
-
+    application.add_handler(
         MessageHandler(
-
-            filters.TEXT &
-
-            ~filters.COMMAND,
-
-            ai_chat
-
+            filters.Regex("^🤖 مشاوره خرید$"),
+            ai_chat,
         )
-
     )
 
-    return app
-    def main():
+    application.add_handler(
+        MessageHandler(
+            filters.TEXT & ~filters.COMMAND,
+            ai_chat,
+        )
+    )
+
+    return application
+
+
+def main():
 
     import asyncio
 
     asyncio.run(
-
         init_db()
-
     )
 
-    app = create_app()
+    app = create_application()
 
-    logging.info(
-
-        "Ghoghnoos Cement Bot Started..."
-
-    )
+    logger.info("Ghoghnoos Cement Bot Started")
 
     app.run_polling(
-
-        allowed_updates=Update.ALL_TYPES
-
+        allowed_updates=Update.ALL_TYPES,
+        drop_pending_updates=True,
     )
 
 
@@ -350,12 +292,9 @@ if __name__ == "__main__":
 
     except KeyboardInterrupt:
 
-        logging.info(
+        logger.info("Bot Stopped")
 
-            "Bot Stopped."
+    except Exception as error:
 
-        )
-
-    except Exception as e:
-
-        logging.exception(e)
+        logger.exception(error)
+        
