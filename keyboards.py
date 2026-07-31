@@ -5,8 +5,9 @@ from telegram import (
     InlineKeyboardButton
 )
 
+from config import CHANNEL_USERNAME
 
-# منوی اصلی
+
 def main_menu():
 
     keyboard = [
@@ -29,13 +30,14 @@ def main_menu():
     ]
 
     return ReplyKeyboardMarkup(
+
         keyboard,
-        resize_keyboard=True,
-        is_persistent=True
+
+        resize_keyboard=True
+
     )
 
 
-# دکمه عضویت کانال
 def join_channel_keyboard():
 
     keyboard = [
@@ -44,9 +46,9 @@ def join_channel_keyboard():
 
             InlineKeyboardButton(
 
-                text="📢 عضویت در کانال",
+                "📢 عضویت در کانال",
 
-                url="https://t.me/+c9zWKkU5OXw4ODZk"
+                url=f"https://t.me/{CHANNEL_USERNAME.replace('@','')}"
 
             )
 
@@ -56,7 +58,7 @@ def join_channel_keyboard():
 
             InlineKeyboardButton(
 
-                text="✅ عضو شدم",
+                "✅ عضو شدم",
 
                 callback_data="check_join"
 
@@ -67,39 +69,3 @@ def join_channel_keyboard():
     ]
 
     return InlineKeyboardMarkup(keyboard)
-
-
-# پنل مدیریت
-def admin_menu():
-
-    keyboard = [
-
-        [
-
-            KeyboardButton("📋 لیست سفارش‌ها"),
-
-            KeyboardButton("📊 آمار")
-
-        ],
-
-        [
-
-            KeyboardButton("📣 ارسال پیام همگانی")
-
-        ],
-
-        [
-
-            KeyboardButton("🏠 بازگشت")
-
-        ]
-
-    ]
-
-    return ReplyKeyboardMarkup(
-
-        keyboard,
-
-        resize_keyboard=True
-
-    )
